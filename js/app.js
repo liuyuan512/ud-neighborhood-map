@@ -277,6 +277,7 @@ var ViewModel = function() {
     // 初始化过滤列表数组，让页面加载后能显示所有地点
     self.placeList().forEach(function(place) {
         self.filteredList.push(place);
+
     });
 
     // 生成地图上的小窗口
@@ -322,6 +323,7 @@ var ViewModel = function() {
                 self.filteredList.push(place);
             });
 
+
             // 创建过滤关键字
             self.keyword = ko.observable('');
 
@@ -341,26 +343,37 @@ var ViewModel = function() {
                         // map.addOverlay(place.marker());
                     }
                 });
+
+                markers.forEach(function(marker){
+                  if(marker.title.indexOf(filterKeyword) >= 0){
+                    marker.setMap(map);
+                  }else {
+                    marker.setMap(null);
+                  }
+                });
             };
 
             //used to record the lastly-clicked list item of  left unordered list
-            self.currentMarker = ko.observable(null);
+            // self.currentMarker = ko.observable(null);
 
-            self.showInfo = function(marker){
 
-                // set value of the current map marker
-                self.currentMarker(marker);
-                // add animation on the marker
-                // the marker should be dropped onto the corresponding location
-                self.currentMarker().setAnimation(google.maps.Animation.DROP);
-                // zoom in and change the center of map
-                zoomInMarker(marker);
+
+            self.showInfo = function(place){
+
+                markers.forEach(function(marker){
+                  google.maps.event.trigger(marker, 'click');
+                  console.log(marker.title);
+                });
+
             };
 
             function zoomInMarker(marker){
                 map.setCenter(marker.getPosition());
                 map.setZoom(16);
             }
+
+
+
 
 
       function populateInfoWindow(marker, infowindow) {

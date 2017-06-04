@@ -57,21 +57,22 @@
         </div>
     </div>
 
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
     <script src="js/lib/jquery.min.js"></script>
     <script src="js/lib/bootstrap.min.js"></script>
     <script src="js/lib/knockout-3.4.2.js"></script>
+    <script type="text/javascript"></script>
     <script type="text/javascript">
-
+      // 谷歌地图api加载失败时的回调函数
+      var mapError = function() {
+          window.alert("谷歌地图加载失败，请稍后重试");
+      };
     </script>
     <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDhs0w_8_AKpIJi7GF52ECiFjYObU8obr0&v=3&v=3&callback=initMap">
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDhs0w_8_AKpIJi7GF52ECiFjYObU8obr0&v=3&v=3&callback=initMap" async defer onerror="mapError()">
     </script>
-    <script src="js/lib/EventWrapper.min.js"></script>
     <script src="js/app.js"></script>
 </body>
 
