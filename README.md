@@ -6,7 +6,8 @@
 
 ### 怎么打开它
 
-把这个代码库下载下来，然后解压缩，用浏览器打开index.html
+1.把这个代码库下载下来，然后解压缩，用浏览器打开index.html
+2.也可以[点击这里](https://github.com/liuyuan512/ud-neighborhood-map)
 
 ### 数据来源和使用的API和组件
 
