@@ -236,12 +236,12 @@ var map;
 
 // 地点的model，数据来源：谷歌地图
 var locations = [
-  {title:'烟台大学(西门)',location:{lat: 37.475225, lng: 121.45405}},
-  {title:'清泉学校退休职工部',location:{lat: 37.484147, lng: 121.447786}},
-  {title:'烟台银行',location:{lat: 37.476001, lng: 121.453275}},
-  {title:'汉堡王',location:{lat: 37.479689, lng: 121.452184}},
-  {title:'天隆酒店',location:{lat: 37.484026, lng: 121.4566475}},
-  {title:'海边咖啡开餐',location:{lat: 37.483162, lng: 121.454764}}
+  {title:'烟台大学(西门)',location:{lat: 37.475225, lng: 121.45405},id:'7c3578db05045cda8f1a89fa'},
+  {title:'清泉学校退休职工部',location:{lat: 37.484147, lng: 121.447786},id:'618a132aeed7844b465726b8'},
+  {title:'烟台银行',location:{lat: 37.476001, lng: 121.453275},id:'a5ef680f0796f0d4b9df8f09'},
+  {title:'汉堡王',location:{lat: 37.479689, lng: 121.452184},id:'a87f1519342c10f8ebe582e9'},
+  {title:'天隆酒店',location:{lat: 37.484026, lng: 121.4566475},id:'e6ee2fd237fbdd492b11d150'},
+  {title:'海边咖啡开餐',location:{lat: 37.483162, lng: 121.454764},id:'dffd4642901b73b33c9a5e53'}
 ];
 
 // 地点构造函数
@@ -250,6 +250,7 @@ var Place = function(data) {
     this.lat = ko.observable(data.lat);
     this.lng = ko.observable(data.lng);
     this.marker = ko.observable();
+    this.id = ko.observable(data.id);
     this.address = ko.observable('');
     this.picId = ko.observable('');
     this.tag = ko.observable('');
@@ -270,16 +271,6 @@ var ViewModel = function() {
     locations.forEach(function(location) {
         self.placeList.push(new Place(location));
     });
-
-    // 创建过滤列表数组
-    self.filteredList = ko.observableArray();
-
-    // 初始化过滤列表数组，让页面加载后能显示所有地点
-    self.placeList().forEach(function(place) {
-        self.filteredList.push(place);
-
-    });
-
     // 生成地图上的小窗口
     var infoWindow = new google.maps.InfoWindow();
 
@@ -289,19 +280,25 @@ var ViewModel = function() {
     //生成边界
     var bounds = new google.maps.LatLngBounds();
 
+    // 创建过滤列表数组
+    self.filteredList = ko.observableArray();
+
       //给每个地点标记设定小窗口
       for (var i = 0; i < locations.length; i++) {
 
             // Get the position from the location array.
             var position = locations[i].location;
             var title = locations[i].title;
+            var uid = locations[i].id;
+            locations[i].marker = ko.observable();
             // Create a marker per location, and put into markers array.
               marker = new google.maps.Marker({
               map: map,
               position: position,
               title: title,
               animation: google.maps.Animation.DROP,
-              id: i
+              id: i,
+              uid:uid
             });
             // Push the marker to our array of markers.
               markers.push(marker);
@@ -311,17 +308,12 @@ var ViewModel = function() {
               });
 
             bounds.extend(markers[i].position);
+
+            self.filteredList.push(locations[i]);
+            locations[i].marker(marker);
         }
 
             map.fitBounds(bounds);
-
-            // 创建过滤列表数组
-            self.filteredList = ko.observableArray();
-
-            // 初始化过滤列表数组，让页面加载后能显示所有地点
-            self.placeList().forEach(function(place) {
-                self.filteredList.push(place);
-            });
 
 
             // 创建过滤关键字
@@ -340,7 +332,6 @@ var ViewModel = function() {
                 list.forEach(function(place) {
                     if (place.title().indexOf(filterKeyword) != -1) {
                         self.filteredList.push(place);
-                        // map.addOverlay(place.marker());
                     }
                 });
 
@@ -353,26 +344,12 @@ var ViewModel = function() {
                 });
             };
 
-            //used to record the lastly-clicked list item of  left unordered list
-            // self.currentMarker = ko.observable(null);
-
-
-
+            //同步列表页的点击事件
             self.showInfo = function(place){
-
-                markers.forEach(function(marker){
-                  google.maps.event.trigger(marker, 'click');
-                  console.log(marker.title);
-                });
+                var mkr = place.marker();
+                google.maps.event.trigger(mkr, 'click');
 
             };
-
-            function zoomInMarker(marker){
-                map.setCenter(marker.getPosition());
-                map.setZoom(16);
-            }
-
-
 
 
 
@@ -388,8 +365,10 @@ var ViewModel = function() {
           infowindow.addListener('closeclick',function(){
             infowindow.setMarker = null;
           });
-
-          showLocationDetail(marker);
+          zoomInMarker(marker);
+          // showLocationDetail(marker);
+          showBmapLocationDetail(marker);
+          // showYelpLocationDetail(marker);
         }
       }
 
@@ -409,7 +388,9 @@ var ViewModel = function() {
              console.log(data);
              var detailString = "";
              if(data.status === "OK"){
+                  detailString +="<h4>"+ marker.title + "<h4>";
                   var place_id = data.results[0].place_id;
+
                  detailString += "<div>地址ID:" + place_id + "</div>";
 
                  var formatted_address = data.results[0].formatted_address;
@@ -430,4 +411,65 @@ var ViewModel = function() {
           });
       }
 
+      //设置地图以标记点为中心并且放大
+      function zoomInMarker(marker){
+          map.setCenter(marker.getPosition());
+          map.setZoom(16);
+      }
+
+
+       function showBmapLocationDetail(marker){
+        // 使用百度Place API 获取地点详情
+
+        var ajaxUrl = "http://api.map.baidu.com/place/v2/detail?uid=" + marker.uid + "&output=json&scope=2&ak=0wvDo2Nsf3VoXx7BUwEj3HLlFS6csNTa";
+        $.ajax({
+            url: ajaxUrl,
+            type: "GET",
+            dataType: "JSONP"
+        }).done(function(data) {
+
+           var detailString = '';
+            // 判断获取数据状态
+            if (data.status === 0) {
+                // 获取地址
+                var address = '地址：' + data.result.address;
+                detailString +='<p>'+address + '</p>';
+                // 获取图片id（如果有）
+                var picId = data.result.hasOwnProperty('street_id') ? data.result.street_id : '';
+                detailString +='<p>'+picId + '</p>';
+                // 判断是否有详情数据
+                if (data.result.hasOwnProperty('detail_info')) {
+                    // 获取标签（如果有）
+                    var tag = data.result.detail_info.hasOwnProperty('tag') ? '标签：' + data.result.detail_info.tag : '';
+                    detailString +='<p>'+tag + '</p>';
+                    // 获取评分（如果有）
+                    var rating = data.result.detail_info.hasOwnProperty('overall_rating') ? '评分：' + data.result.detail_info.overall_rating : '';
+                    detailString +='<p>'+rating + '</p>';
+                    // 获取评价数组（如果有）
+                    var reviews = data.result.detail_info.hasOwnProperty('di_review_keyword') ? data.result.detail_info.di_review_keyword : '';
+                    // 创建一个空数组，用来将遍历的数组数据转换成字符串
+                    var comment = [];
+                    if (reviews != []) {
+                        reviews.forEach(function(review) {
+                            if (review.hasOwnProperty('keyword')) {
+                                comment.push(review.keyword);
+                            }
+                        });
+                        if (comment != []) {
+                            detailString +='<p>'+'热评：' + comment.toString() + '</p>';
+                        }
+                    }
+
+                }
+                // 设定小窗口内容
+                    infoWindow.setContent(detailString);
+
+            } else {
+                var content = '<h4>地点数据获取失败，没有这个地点的数据<h4>'; // 若数据获取失败，则设定小窗口内容为错误信息
+                infoWindow.setContent(content);
+            }
+  }).fail(function() {
+      alert("地点数据获取失败，请刷新页面重试"); // ajax数据获取失败时的事件
+    });
+  }
 };
