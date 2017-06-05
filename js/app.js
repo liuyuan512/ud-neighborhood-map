@@ -246,6 +246,7 @@ var locations = [
 
 // 地点构造函数
 var Place = function(data) {
+    this.location = ko.observable(data.location);
     this.title = ko.observable(data.title);
     this.lat = ko.observable(data.lat);
     this.lng = ko.observable(data.lng);
@@ -283,6 +284,8 @@ var ViewModel = function() {
     // 创建过滤列表数组
     self.filteredList = ko.observableArray();
 
+
+
       //给每个地点标记设定小窗口
       for (var i = 0; i < locations.length; i++) {
 
@@ -313,7 +316,9 @@ var ViewModel = function() {
             locations[i].marker(marker);
         }
 
-            map.fitBounds(bounds);
+
+
+        map.fitBounds(bounds);
 
 
             // 创建过滤关键字
@@ -326,11 +331,12 @@ var ViewModel = function() {
 
                 // 获取过滤关键字和地点列表
                 var filterKeyword = self.keyword();
-                var list = self.placeList();
+                // var list = self.placeList();
+                var list = locations;
 
                 // 遍历地点列表，若含有关键字，则使其在列表栏和地图上显示出来
                 list.forEach(function(place) {
-                    if (place.title().indexOf(filterKeyword) != -1) {
+                    if (place.title.indexOf(filterKeyword) != -1) {
                         self.filteredList.push(place);
                     }
                 });
@@ -372,50 +378,7 @@ var ViewModel = function() {
         }
       }
 
-      function showLocationDetail(marker){
 
-          var url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=" +
-              marker.position.lat() +
-              "," +
-              marker.position.lng() +
-              "&key=AIzaSyDhs0w_8_AKpIJi7GF52ECiFjYObU8obr0&v=3&v=3";
-
-          //make ajax request to foursquare api
-          $.ajax({
-              url : url
-              //do response success handling
-          }).done(function(data, textStatus, jqXhr){
-             console.log(data);
-             var detailString = "";
-             if(data.status === "OK"){
-                  detailString +="<h4>"+ marker.title + "<h4>";
-                  var place_id = data.results[0].place_id;
-
-                 detailString += "<div>地址ID:" + place_id + "</div>";
-
-                 var formatted_address = data.results[0].formatted_address;
-                 detailString += "<div>详情:" + formatted_address + "</div>";
-
-                 var geometry = data.results[0].geometry;
-                 detailString += "<div>类型:" + geometry.location_type + "</div>";
-                 detailString += "<div>纬度:" + geometry.location.lat + "</div>";
-                 detailString += "<div>经度:" + geometry.location.lng + "</div>";
-                 infoWindow.setContent(detailString);
-             }
-              //do response error handling
-          }).fail(function(jqXhr, textStatus, errorThrown){
-              console.log( "textStatus:" + textStatus + ", errorThrown:" +errorThrown);
-              //do ajax logging on the browser console
-          }).always (function(jqXHROrData, textStatus, jqXHROrErrorThrown) {
-              console.log( "ajax request to foursquare is completed, textStatus:" + textStatus);
-          });
-      }
-
-      //设置地图以标记点为中心并且放大
-      function zoomInMarker(marker){
-          map.setCenter(marker.getPosition());
-          map.setZoom(16);
-      }
 
 
        function showBmapLocationDetail(marker){
@@ -431,6 +394,7 @@ var ViewModel = function() {
            var detailString = '';
             // 判断获取数据状态
             if (data.status === 0) {
+                detailString +='<p>'+marker.title + '</p>';
                 // 获取地址
                 var address = '地址：' + data.result.address;
                 detailString +='<p>'+address + '</p>';
@@ -467,9 +431,16 @@ var ViewModel = function() {
             } else {
                 var content = '<h4>地点数据获取失败，没有这个地点的数据<h4>'; // 若数据获取失败，则设定小窗口内容为错误信息
                 infoWindow.setContent(content);
-            }
-  }).fail(function() {
-      alert("地点数据获取失败，请刷新页面重试"); // ajax数据获取失败时的事件
-    });
-  }
-};
+                        }
+              }).fail(function() {
+                  alert("地点数据获取失败，请刷新页面重试"); // ajax数据获取失败时的事件
+                });
+              }
+            };
+
+
+          //设置地图以标记点为中心并且放大
+          function zoomInMarker(marker){
+              map.setCenter(marker.getPosition());
+              map.setZoom(16);
+          }

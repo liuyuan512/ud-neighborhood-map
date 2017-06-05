@@ -13,4 +13,5 @@
 
 * [bootstrap](http://getbootstrap.com/)
 * [knockout.js](http://knockoutjs.com/)
+* [百度Place API](http://lbsyun.baidu.com/index.php?title=webapi/guide/webservice-placeapi)
 * ...
